@@ -48,15 +48,17 @@ THREE.AsciiEffect = function ( renderer, charSet, options ) {
 
 		renderer.setSize( w, h );
 
+		setResolutionVariables( bResolution );
+
 		initAsciiSize();
 
 	};
 
 
-	this.render = function ( scene, camera ) {
+	this.render = function ( scene, camera, resolution ) {
 
 		renderer.render( scene, camera );
-		asciifyImage( renderer, oAscii );
+		asciifyImage( renderer, oAscii, resolution );
 
 	};
 
@@ -71,7 +73,9 @@ THREE.AsciiEffect = function ( renderer, charSet, options ) {
 	* MIT License [http://www.nihilogic.dk/licenses/mit-license.txt]
 	*/
 
-	function initAsciiSize() {
+	function initAsciiSize( newResolution ) {
+
+		if ( newResolution ) fResolution = newResolution;
 
 		iWidth = Math.round( width * fResolution );
 		iHeight = Math.round( height * fResolution );
@@ -109,6 +113,16 @@ THREE.AsciiEffect = function ( renderer, charSet, options ) {
 		oStyle.textDecoration = "none";
 	}
 
+	function updateResolution ( resolution ) {
+		if ( !resolution ) return;
+
+		setResolutionVariables( resolution );
+
+		var updatedResolution = fResolution;
+
+		initAsciiSize( updatedResolution );
+	}
+
 
 	var aDefaultCharList = (" .,:;i1tfLCG08@").split("");
 	var aDefaultColorCharList = (" CGO08@").split("");
@@ -130,62 +144,70 @@ THREE.AsciiEffect = function ( renderer, charSet, options ) {
 
 	if (charSet) aCharList = charSet;
 
+	// Define resolution variables
 	var fResolution = 0.5;
+	var fFontSize;
+	var fLineHeight;
+	var fLetterSpacing;
 
-	switch ( strResolution ) {
+	function setResolutionVariables ( resolution ) {
+		
+		switch ( strResolution ) {
 
-		case "low" : 	fResolution = 0.25; break;
-		case "medium" : fResolution = 0.5; break;
-		case "high" : 	fResolution = 1; break;
+			case "low" : 	fResolution = 0.25; break;
+			case "medium" : fResolution = 0.5; break;
+			case "high" : 	fResolution = 1; break;
 
-	}
-
-	if ( bResolution ) fResolution = bResolution;
-
-	// Setup dom
-
-	var fFontSize = (2 / fResolution) * iScale;
-	var fLineHeight = (2 / fResolution) * iScale;
-
-	// adjust letter-spacing for all combinations of scale and resolution to get it to fit the image width.
-
-	var fLetterSpacing = 0;
-
-	if ( strResolution == "low" ) {
-
-		switch (iScale) {
-			case 1 : fLetterSpacing = -1; break;
-			case 2 :
-			case 3 : fLetterSpacing = -2.1; break;
-			case 4 : fLetterSpacing = -3.1; break;
-			case 5 : fLetterSpacing = -4.15; break;
 		}
 
-	}
+		if ( resolution ) fResolution = resolution;
 
-	if ( strResolution == "medium" ) {
+		// Setup dom
 
-		switch (iScale) {
-			case 1 : fLetterSpacing = 0; break;
-			case 2 : fLetterSpacing = -1; break;
-			case 3 : fLetterSpacing = -1.04; break;
-			case 4 :
-			case 5 : fLetterSpacing = -2.1; break;
+		fFontSize = (2 / fResolution) * iScale;
+		fLineHeight = (2 / fResolution) * iScale;
+
+		// adjust letter-spacing for all combinations of scale and resolution to get it to fit the image width.
+
+		fLetterSpacing = 0;
+
+		if ( strResolution == "low" ) {
+
+			switch (iScale) {
+				case 1 : fLetterSpacing = -1; break;
+				case 2 :
+				case 3 : fLetterSpacing = -2.1; break;
+				case 4 : fLetterSpacing = -3.1; break;
+				case 5 : fLetterSpacing = -4.15; break;
+			}
+
 		}
 
-	}
+		if ( strResolution == "medium" ) {
 
-	if ( strResolution == "high" ) {
+			switch (iScale) {
+				case 1 : fLetterSpacing = 0; break;
+				case 2 : fLetterSpacing = -1; break;
+				case 3 : fLetterSpacing = -1.04; break;
+				case 4 :
+				case 5 : fLetterSpacing = -2.1; break;
+			}
 
-		switch (iScale) {
-			case 1 :
-			case 2 : fLetterSpacing = 0; break;
-			case 3 :
-			case 4 :
-			case 5 : fLetterSpacing = -1; break;
 		}
 
+		if ( strResolution == "high" ) {
+
+			switch (iScale) {
+				case 1 :
+				case 2 : fLetterSpacing = 0; break;
+				case 3 :
+				case 4 :
+				case 5 : fLetterSpacing = -1; break;
+			}
+
+		}
 	}
+
 
 
 	// can't get a span or div to flow like an img element, but a table works?
@@ -193,7 +215,9 @@ THREE.AsciiEffect = function ( renderer, charSet, options ) {
 
 	// convert img element to ascii
 
-	function asciifyImage( canvasRenderer, oAscii ) {
+	function asciifyImage( canvasRenderer, oAscii, resolution ) {
+
+		updateResolution( resolution );
 
 		oCtx.clearRect( 0, 0, iWidth, iHeight );
 		oCtx.drawImage( oCanvasImg, 0, 0, iWidth, iHeight );
